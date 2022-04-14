@@ -1,21 +1,36 @@
 import java.util.*;
-import java.text.SimpleDateFormat;
-import java.io.File;
+import java.io.*;
 
-public class CardRenewalBooking{
+class CardRenewalBooking{
     // local variables
     private int booking_ID;
     private int customer_ID;
     private String bookingStatus = "Unconfirmed";
-    private String branch;
-    private int time;
+    private String branch = "";
+    private String timeSlot = "";
 
-    public static void createBooking(int customer_ID){
+    CardRenewalBooking(int booking_ID, int customer_ID, String bookingStatus, String branch, String timeSlot){
+        this.booking_ID = booking_ID;
+        this.customer_ID = customer_ID;
+        this.bookingStatus = bookingStatus;
+        this.branch = branch;
+        this.timeSlot = timeSlot;
+    }
+
+    public void createBooking(int customer_ID){
         // local variables
         Scanner scanner = new Scanner(System.in);
         int branchOpt = 0;
-        String branch;
+        String branch = "";
+        char confirmOpt = 'a';
+        String date = "";
+        int detailOpt = 0;
+        String timeSlot = "";
         int timeOpt;
+        File bookingsFile = new File("Card-Renewal-Bookings.txt");
+        ArrayList<CardRenewalBooking> cardRenewalBookings = new ArrayList<CardRenewalBooking>();
+        ObjectOutputStream oos = null;
+        ListIterator li = null;
 
         // show chosen menu header
         System.out.println("--- Create Booking --- \n");
@@ -45,37 +60,61 @@ public class CardRenewalBooking{
 
         System.out.println("Date (dd/MM/yyyy): ");
         String dateInput = scanner.nextLine();
-        Date date = new SimpleDateFormat("dd/MM/yyyy").parse(dateInput);
 
         System.out.println("Time: (please select 1 option only)");
-        // read time slot txt file
-        // display time slots based on date given before
-        for (iterable_type iterable_element : iterable) {
-            
+        try (// read time slot txt file
+            Scanner fileIn = new Scanner(new File("Card-Renewal-Booking-Time-Slots.txt"))) {
+            while(fileIn.hasNextLine()){
+                System.out.println("-------------------------------------");
+                li = cardRenewalBookings.listIterator();
+                while(li.hasNext()){
+                    int i = 1;
+                    System.out.println("Option " + i + ":" + li.next());
+                    i++;
+                }
+                System.out.println("-------------------------------------");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
-
         // confirm with user, if not they go back and change
         System.out.println("Below is the complete list of details:");
         System.out.println("Branch: " + branch);
         System.out.println("Date: " + date);
-        System.out.println("Time: " + time);
+        System.out.println("Time: " + timeSlot);
 
-        System.out.println("Confirm submit (Y/N):");
-        char confirmOpt = scanner.next().charAt(0);
+        while ( !(confirmOpt == 'Y' || confirmOpt == 'y' || confirmOpt == 'N' || confirmOpt == 'n' )) {
+            System.out.println("Confirm submit (Y/N):");
+            confirmOpt = scanner.next().charAt(0);
+        }
 
         if (confirmOpt == 'N' || confirmOpt == 'n'){
-            while ( !(confirmOpt == 1 || confirmOpt == 2 || confirmOpt == 3) ){
+            while ( !(detailOpt == 1 || detailOpt == 2 || detailOpt == 3) ){
                 System.out.println("Which detail do you want to edit?");
                 System.out.println("Option 1: Branch");
                 System.out.println("Option 2: Date");
                 System.out.println("Option 3: Time");
-                confirmOpt = scanner.nextInt();
+                detailOpt = scanner.nextInt();
             }
         }
         else{
             // write to txt file
-    
-
+            try {
+                oos = new ObjectOutputStream(new FileOutputStream(bookingsFile));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                oos.writeObject(cardRenewalBookings);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                oos.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
 
         // close scanner
@@ -84,23 +123,27 @@ public class CardRenewalBooking{
         // no return
     }
 
-    public static void updateBookingTimeList(){
+    public void updateBookingTimeList() throws IOException{
         // local variables
         Scanner scanner = new Scanner(System.in);
-        int removeAddOpt;
+        int removeAddOpt = 0;
+        int slotOpt = 0;
+        File timeSlotsFile = new File("Card-Renewal-Booking-Time-Slots.txt");
+        ArrayList<String> timeSlots = new ArrayList<String>();
+        ObjectOutputStream oos = null;
+        ListIterator li = null;
+        String text = "";
 
         // show chosen menu header
         System.out.println("--- Update Booking Time List ---\n");
-        // read time slot txt file
 
-        // ask for date
-        System.out.println("Please input the date (dd/MM/yyyy):");
-        String dateInput = scanner.nextLine();
-        Date date = new SimpleDateFormat("dd/MM/yyyy").parse(dateInput);
-
-        // display time slots based on date given
-        for (iterable_type iterable_element : iterable) {
-            
+        // display all time slots
+        Scanner fileIn = new Scanner(new File("Card-Renewal-Booking-Time-Slots.txt"));
+        while(fileIn.hasNextLine()){
+            System.out.println("-------------------------------------");
+            text = fileIn.nextLine();
+            System.out.println(text);
+            System.out.println("-------------------------------------");
         }
 
         // ask to remove or add
@@ -113,49 +156,78 @@ public class CardRenewalBooking{
 
         if (removeAddOpt == 1){
             // Option 1: Remove
-            // while slotOpt is ! below 0 and above array length
-            System.out.println("Which time slot would you like to remove?");
-            for (iterable_type iterable_element : iterable) {
-                System.out.println("Option " + i +": " + timeSlot[i]);
-                i++;
+            while ( !(slotOpt < 0) ) {
+                System.out.println("Which time slot would you like to remove?");
+                System.out.println("-------------------------------------");
+                li = timeSlots.listIterator();
+                while(li.hasNext()){
+                    int i = 1;
+                    System.out.println("Option " + i + ":" + li.next());
+                    i++;
+                }
+                System.out.println("-------------------------------------");
             }
-            // close while loop
         }
         else{
-            // Option 12: Add
+            // Option 2: Add
             System.out.println("Please input a time slot (HH:mm to HH:mm):");
             String timeSlot = scanner.nextLine();
 
             // write to txt file
+            oos = new ObjectOutputStream(new FileOutputStream(timeSlotsFile));
+            oos.writeObject(timeSlot);
+            oos.close();
         }
 
-        // display time slots based on date given
-        for (iterable_type iterable_element : iterable) {
-            
+        // display new time slots
+        while(fileIn.hasNextLine()){
+            System.out.println("-------------------------------------");
+            text = fileIn.nextLine();
+            System.out.println(text);
+            System.out.println("-------------------------------------");
         }
+
+        scanner.close();
         
         // no return
     }
 
     // need to check this against searchBooking function
-    public static void updateBookingStatus(){
+    public void updateBookingStatus() throws IOException{
         // local variables
         Scanner scanner = new Scanner(System.in);
         int statusOpt = 0;
+        String bookingStatus = "Unconfirmed";
+        File bookingsFile = new File("Card-Renewal-Bookings.txt");
+        ObjectOutputStream oos = null;
+        String text;
 
         // show chosen menu header
         System.out.println("--- Update Booking Status ---\n");
 
         // read booking txt file
-
+        Scanner fileIn = new Scanner(new File("Card-Renewal-Booking-Time-Slots.txt"));
+        while(fileIn.hasNextLine()){
+            System.out.println("-------------------------------------");
+            text = fileIn.nextLine();
+            System.out.println(text);
+            System.out.println("-------------------------------------");
+        }
         
         System.out.println("Please key in the booking ID: ");
         int bookingID = scanner.nextInt();
+        while(fileIn.hasNextLine()){
+            if(bookingID != fileIn.nextInt()){
+                fileIn.nextInt();
+            }
+            else{
+                text = fileIn.nextLine();
+                System.out.println(text);
+            }
+        }
 
-        // find booking id
-        // iterate through txt lines
-
-        // display booking details (important: booking id, booking status)
+        // display details of this specific booking
+        System.out.println("--- Update Booking Status ---\n");
 
         // prompt user to input booking status
         while ( !(statusOpt == 1 || statusOpt == 2 || statusOpt == 3 || statusOpt == 4) ){
@@ -170,29 +242,35 @@ public class CardRenewalBooking{
         // write to txt file based on options given
         switch (statusOpt) {
             case 1:
-                bookingStatus = "Confirmed";
-                // write to file
-
+                this.bookingStatus = "Confirmed";
+                oos = new ObjectOutputStream(new FileOutputStream(bookingsFile));
+                oos.writeObject(bookingStatus);
+                oos.close();
                 break;
             case 2:
                 bookingStatus = "Cancelled";
-                // write to file
-
+                oos = new ObjectOutputStream(new FileOutputStream(bookingsFile));
+                oos.writeObject(bookingStatus);
+                oos.close();
                 break;
             case 3:
                 bookingStatus = "Rescheduled";
-                // write to file
-
+                oos = new ObjectOutputStream(new FileOutputStream(bookingsFile));
+                oos.writeObject(bookingStatus);
+                oos.close();
                 break;
             case 4:
                 bookingStatus = "Closed";
-                // write to file
-
+                oos = new ObjectOutputStream(new FileOutputStream(bookingsFile));
+                oos.writeObject(bookingStatus);
+                oos.close();
                 break;
             default:
             System.out.println("Error: statusOpt switch case");
                 break;
         }
+
+        scanner.close();
 
         // no return
     }
